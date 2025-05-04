@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharePoint List Viewer - Thanhvien</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css">
+    <style>
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0078d4;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            margin-top: 50px;
+        }
+        .member-card {
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .search-bar {
+            margin-bottom: 20px;
+        }
+        .pagination {
+            margin-top: 20px;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const SharePointListViewer = () => {
+            const [members, setMembers] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [currentPage, setCurrentPage] = useState(1);
+            const [itemsPerPage] = useState(10);
+
+            // SharePoint site and list information
+            const siteUrl = 'https://qlcvonline.sharepoint.com/sites/coffee';
+            const listName = 'Thanhvien';
+
+            useEffect(() => {
+                fetchMembers();
+            }, []);
+
+            const fetchMembers = async () => {
+                try {
+                    // In a real application, you would need to authenticate with SharePoint
+                    // This is a mock implementation for demonstration purposes
+                    // In production, you'd use proper authentication and the SharePoint REST API
+                    
+                    // Mock data for demonstration - replace with actual API call in production
+                    setTimeout(() => {
+                        // This is mock data - your actual data structure may differ
+                        const mockData = {
+                            value: [
+                                { Id: 1, Title: "Nguyễn Văn A", Email: "nguyenvana@example.com", PhoneNumber: "0901234567", Position: "Manager" },
+                                { Id: 2, Title: "Trần Thị B", Email: "tranthib@example.com", PhoneNumber: "0912345678", Position: "Developer" },
+                                { Id: 3, Title: "Lê Văn C", Email: "levanc@example.com", PhoneNumber: "0923456789", Position: "Designer" },
+                                { Id: 4, Title: "Phạm Thị D", Email: "phamthid@example.com", PhoneNumber: "0934567890", Position: "Marketing" },
+                                { Id: 5, Title: "Hoàng Văn E", Email: "hoangvane@example.com", PhoneNumber: "0945678901", Position: "HR" },
+                                // Add more mock data as needed
+                            ]
+                        };
+                        
+                        setMembers(mockData.value);
+                        setLoading(false);
+                    }, 1000);
+
+                    // Actual implementation would look like this:
+                    /*
+                    const endpoint = `${siteUrl}/_api/web/lists/getbytitle('${listName}')/items`;
+                    
+                    const response = await fetch(endpoint, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json;odata=nometadata',
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer YOUR_ACCESS_TOKEN_HERE'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    setMembers(data.value);
+                    setLoading(false);
+                    */
+                } catch (err) {
+                    console.error("Error fetching data:", err);
+                    setError("Không thể tải dữ liệu từ SharePoint. Vui lòng thử lại sau.");
+                    setLoading(false);
+                }
+            };
+
+            // Filter members based on search term
+            const filteredMembers = members.filter(member => 
+                member.Title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                member.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (member.Position && member.Position.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+
+            // Pagination
+            const indexOfLastItem = currentPage * itemsPerPage;
+            const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+            const currentItems = filteredMembers.slice(indexOfFirstItem, indexOfLastItem);
+            const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+
+            const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+            if (loading) {
+                return (
+                    <div className="app-container">
+                        <div className="header">
+                            <h1>Danh sách thành viên</h1>
+                            <p>Đang tải dữ liệu từ SharePoint...</p>
+                        </div>
+                        <div className="loading">
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="app-container">
+                        <div className="header">
+                            <h1>Danh sách thành viên</h1>
+                        </div>
+                        <div className="alert alert-danger" role="alert">
+                            {error}
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <h1>Danh sách thành viên</h1>
+                        <p>Site: {siteUrl}</p>
+                    </div>
+
+                    <div className="search-bar">
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Tìm kiếm thành viên..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="row">
+                        {currentItems.length > 0 ? (
+                            currentItems.map(member => (
+                                <div key={member.Id} className="col-md-6 col-lg-4">
+                                    <div className="card member-card">
+                                        <div className="card-body">
+                                            <h5 className="card-title">{member.Title}</h5>
+                                            <p className="card-text">
+                                                <strong>Email:</strong> {member.Email}<br />
+                                                <strong>SĐT:</strong> {member.PhoneNumber || 'N/A'}<br />
+                                                <strong>Chức vụ:</strong> {member.Position || 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-12">
+                                <div className="alert alert-info">
+                                    Không tìm thấy thành viên nào phù hợp với từ khóa tìm kiếm.
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {filteredMembers.length > itemsPerPage && (
+                        <nav>
+                            <ul className="pagination">
+                                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link" 
+                                        onClick={() => paginate(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Trước
+                                    </button>
+                                </li>
+                                
+                                {[...Array(totalPages).keys()].map(number => (
+                                    <li key={number + 1} className={`page-item ${currentPage === number + 1 ? 'active' : ''}`}>
+                                        <button 
+                                            className="page-link" 
+                                            onClick={() => paginate(number + 1)}
+                                        >
+                                            {number + 1}
+                                        </button>
+                                    </li>
+                                ))}
+                                
+                                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link" 
+                                        onClick={() => paginate(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<SharePointListViewer />, document.getElementById('root'));
+    </script>
+</body>
+</html>
